@@ -1,6 +1,9 @@
 import React from 'react'; 
 import {Row,Col,Table,Modal,Popconfirm,message,Form,Button} from 'antd';
 
+
+
+
 /**
  * 默认提供的 DecoratedFormComponent 对象，提供工厂函数，用于创建普通AddOrEdit表单、和带Modal表单
  */
@@ -52,175 +55,239 @@ export const defaultDecoratedForm={
 
 
 /**
- * AddForm
+ * 工厂函数，生成一个 AddForm 组件
+ * @param {*} model 
+ * @param {*} AddOrEditForm 
  */
-export const addform={
+export function addform(model,AddOrEditForm){
 
-    /**
-     * 工厂函数，生成一个 AddForm 组件
-     */
-    create:function(model,AddOrEditForm){
-
-        class AddForm extends React.Component{
-            constructor(props){
-                super(props);
-                this.formRef=null;
-                // bind `this`
-                this.onOk=this.onOk.bind(this);
-            }
-
-            onOk(){
-                return this.formRef.validateFields((err,value)=>{
-                    if(!err){
-                        model.methods.create(value)
-                            .then(resp=>{
-                                message.success(`创建成功`);
-                                this.formRef.resetFields();
-                            })
-                            .catch(e=>{
-                                message.error(`失败`+e);
-                            });
-                    }
-                });
-            }
-        
-            render() {
-                return <AddOrEditForm ref={form=>this.formRef=form} onOk={this.onOk} /> ;
-            }
+    class AddForm extends React.Component{
+        constructor(props){
+            super(props);
+            this.formRef=null;
+            // bind `this`
+            this.onOk=this.onOk.bind(this);
         }
 
-        return AddForm;
-    },
-};
+        onOk(){
+            return this.formRef.validateFields((err,value)=>{
+                if(!err){
+                    model.methods.create(value)
+                        .then(resp=>{
+                            message.success(`创建成功`);
+                            this.formRef.resetFields();
+                        })
+                        .catch(e=>{
+                            message.error(`失败`+e);
+                        });
+                }
+            });
+        }
+    
+        render() {
+            return <AddOrEditForm ref={form=>this.formRef=form} onOk={this.onOk} /> ;
+        }
+    }
+
+    return AddForm;
+}
+
 
 
 
 /**
- * Datagrid
+ * 工厂函数，生成一个 Datagrid 组件
+ * @param {*} model 
+ * @param {*} AddOrEditFormModal 
  */
-export const datagrid={
+export function datagrid(model,AddOrEditFormModal){
+
 
     /**
-     * 工厂函数，生成一个 Datagrid 组件
+     * <Datagrid/>组件，接收onRowClick 属性和 headItem属性
+     * onRowClick: 当点击行候触发
+     * headItem: 当设置后，此Datagrid表示是与一个头项目互关联的行项目构成的列表
      */
-    create:function(model,AddOrEditFormModal){
+    class Datagrid extends React.Component{
 
-        class List extends React.Component{
+        constructor(props){
+            super(props);
+            this.state={
+                data:[],                   // 当前数据源
+                pagination:{},             // 当前分页
+                loading:true,              // 表格是否正在加载，用于控制动画
+                currentRecord:{},          // 执行操作时的当前行记录
+                editModalVisible:false,    // 编辑表单是否可见
+            };
+            // 对 编辑表单组件 的引用
+            this.editForm=null;
+            // bind `this`
+            this.promiseSetState=this.promiseSetState.bind(this);
+            this.onTableChange=this.onTableChange.bind(this);
+            this.onRemove=this.onRemove.bind(this);
+            this.onEditFormSubmit=this.onEditFormSubmit.bind(this);
+            this.onEditFormCancel=this.onEditFormCancel.bind(this);
+        }
 
-            constructor(props){
-                super(props);
-                this.state={
-                    data:[],                   // 当前数据源
-                    pagination:{},             // 当前分页
-                    loading:true,              // 表格是否正在加载，用于控制动画
-                    currentRecord:{},          // 执行操作时的当前行记录
-                    editModalVisible:false,    // 编辑表单是否可见
-                };
-                // 对 编辑表单组件 的引用
-                this.editForm=null;
-                // bind `this`
-                this.onTableChange=this.onTableChange.bind(this);
-                this.onRemove=this.onRemove.bind(this);
-                this.onEditFormSubmit=this.onEditFormSubmit.bind(this);
-                this.onEditFormCancel=this.onEditFormCancel.bind(this);
-            }
+        promiseSetState(state){
+            return new Promise((resolve,reject)=>{
+                this.setState(state,()=>{ resolve(); });
+            });
+        }
 
-            /**
-             * 当表单发生分页变化、过滤器变化、或者排序器变化时，应该从服务器重新加载数据
-             * @param {*} pagination 
-             * @param {*} filters 
-             * @param {*} sorter 
-             */
-            onTableChange(pagination, filters={}, sorter={}) {
+        /**
+         * 当表单发生分页变化、过滤器变化、或者排序器变化时，应该从服务器重新加载数据
+         * @param {*} pagination 
+         * @param {*} filters 
+         * @param {*} sorter 
+         */
+        onTableChange(pagination, filters={}, sorter={}) {
 
-                // const pager = Object.assign({},this.state.pagination);
-                // pager.current = pagination.current;
-                // this.setState({ pagination: pager, });
+            // const pager = Object.assign({},this.state.pagination);
+            // pager.current = pagination.current;
+            // this.setState({ pagination: pager, });
 
-                const {pageSize,current}=pagination;
-                
-                return model.methods.list(current,pageSize /* ,condition */)
-                    .then(result=>{
-                        const {count,rows}=result;
+            const {pageSize,current}=pagination;
+            
+            return model.methods.list(current,pageSize /* ,condition */)
+                .then(result=>{
+                    const {count,rows}=result;
 
-                        const pagination = Object.assign({}, this.state.pagination );
-                        pagination.total = count;
+                    const pagination = Object.assign({}, this.state.pagination );
+                    pagination.total = count;
+                    pagination.current=current;
 
-                        this.setState({ loading: false, data: rows, pagination, });
-                    });
-            }
+                    this.setState({ loading: false, data: rows, pagination, });
+                });
+        }
 
-            onRemove(record){
-                return model.methods.remove(record.id)
-                    .then(resp=>{
-                        console.log(resp);
-                        message.warning('删除成功');
-                    })
-                    // 刷新数据源
+        onRemove(record){
+            return model.methods.remove(record.id)
+                .then(resp=>{
+                    console.log(resp);
+                    message.warning('删除成功');
+                })
+                // 刷新数据源
+                .then(_=>{
+                    return this.onTableChange(this.state.pagination);
+                });
+        }
+
+        onEditFormSubmit(){
+            return this.editForm.validateFields((err,values)=>{
+                if(!err){
+                    const {id}=this.state.currentRecord;
+                    model.methods.update(id,values)
+                        .then(resp=>{
+                            message.success(`修改成功`);
+                            this.setState({editModalVisible:false},()=>{
+                                // 刷新数据源
+                                this.onTableChange(this.state.pagination);
+                            });
+                        })
+                }
+            });
+            
+        }
+
+        onEditFormCancel(){
+            this.setState({editModalVisible:false});
+        }
+
+        /**
+         * 一旦接收到新的属性，如果headItem发生变化，则立即刷新
+         * @param {*} nextProps 
+         */
+        componentWillReceiveProps(nextProps){
+            if( !nextProps.headItem || !nextProps.headItem.id || nextProps.headItem.id==this.props.headItem.id){
+                return;
+            }else{
+                let headItem=nextProps.headItem;
+                return this.promiseSetState({loading:true})
                     .then(_=>{
                         return this.onTableChange(this.state.pagination);
                     });
             }
-
-            onEditFormSubmit(){
-                return this.editForm.validateFields((err,values)=>{
-                    if(!err){
-                        const {id}=this.state.currentRecord;
-                        model.methods.update(id,values)
-                            .then(resp=>{
-                                message.success(`修改成功`);
-                                console.log(resp);
-                                this.setState({editModalVisible:false},()=>{
-                                    // 刷新数据源
-                                    this.onTableChange(this.state.pagination);
-                                });
-                            })
-                    }
-                });
-                
-            }
-
-            onEditFormCancel(){
-                this.setState({editModalVisible:false});
-            }
-
-            componentDidMount(){
-                this.setState({loading:true},()=>{
-                    return this.onTableChange(this.state.pagination);
-                });
-            }
-            render() {
-                const {Column,ColumnGroup}=Table;
-                const fields=model.fields;
-                return (<div>
-                <Table dataSource={this.state.data} pagination={this.state.pagination} loading={this.state.loading} onChange={this.onTableChange} >
-                    { Object.keys(fields).map(k=>{
-                        const field=fields[k];
-                        return <Column title={field.title} key={k} dataIndex={k} />;
-                    }) }
-                    <Column title='操作' key='action' render={(text, record) => (
-                        <span>
-                            <a onClick={()=>{this.setState({editModalVisible:true,currentRecord:record});return false; }} >修改</a>
-                            <span className='ant-divider' />
-                            <Popconfirm title='确认要删除吗' okText='是' cancelText='否' onConfirm={() => { this.onRemove(record); }} >
-                                <a href='#'>删除</a>
-                            </Popconfirm>
-                            <span className='ant-divider' />
-                        </span>)} />
-                </Table>
-
-                <AddOrEditFormModal ref={form=>this.editForm=form} visible={this.state.editModalVisible}
-                    initialValues={this.state.currentRecord}
-                    onOk={this.onEditFormSubmit}
-                    onCancel={this.onEditFormCancel}
-                />
-
-            </div>);
-            }
         }
 
-        return List;
-    },
+        componentDidMount(){
+            this.setState({loading:true},()=>{
+                return this.onTableChange(this.state.pagination);
+            });
+        }
+        render() {
+            const {Column,ColumnGroup}=Table;
+            const fields=model.fields;
+            return (<div>
+            <Table onRowClick={this.props.onRowClick}  dataSource={this.state.data} pagination={this.state.pagination} loading={this.state.loading} onChange={this.onTableChange} >
+                { Object.keys(fields).map(k=>{
+                    const field=fields[k];
+                    return <Column title={field.title} key={k} dataIndex={k} />;
+                }) }
+                <Column title='操作' key='action' render={(text, record) => (
+                    <span>
+                        <a onClick={()=>{
+                            this.editForm.setFieldsValue(record);
+                            this.setState({editModalVisible:true,currentRecord:record});
+                            return false; 
+                        }} >修改</a>
+                        <span className='ant-divider' />
+                        <Popconfirm title='确认要删除吗' okText='是' cancelText='否' onConfirm={() => { this.onRemove(record); }} >
+                            <a href='#'>删除</a>
+                        </Popconfirm>
+                        <span className='ant-divider' />
+                    </span>)} />
+            </Table>
 
-};
+            <AddOrEditFormModal ref={form=>this.editForm=form} visible={this.state.editModalVisible}
+                initialValues={this.state.currentRecord}
+                onOk={this.onEditFormSubmit}
+                onCancel={this.onEditFormCancel}
+            />
 
+        </div>);
+        }
+    }
+
+    return Datagrid;
+}
+
+
+
+/**
+ * 工厂函数，生成一个 MainDetailAdmin 组件
+ * @param {*} MainDatagrid 
+ * @param {*} DetailDatagrid 
+ */
+export function maindetail(MainDatagrid,DetailDatagrid){
+
+
+    class MainDetailAdmin extends React.Component{
+        constructor(props){
+            super(props);
+            this.state={
+                headItem:{},
+            };
+
+            this.onMainDatagridRowClick=this.onMainDatagridRowClick.bind(this);
+        }
+
+        onMainDatagridRowClick(record){
+            this.setState({headItem:record});
+        }
+
+        render(){
+            return (<div>
+                <Row>
+                    <MainDatagrid onRowClick={ this.onMainDatagridRowClick } />
+                </Row>
+                <Row>
+                    <DetailDatagrid headItem={this.state.headRecord}/>
+                </Row>
+            </div>);
+        }
+    }
+
+    return MainDetailAdmin;
+
+}

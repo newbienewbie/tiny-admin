@@ -1,26 +1,25 @@
 {
-  "name": "tiny-admin",
-  "version": "0.0.2",
-  "description": "a tiny Admin UI library written in React.JS",
-  "main": "dist/index.js",
-  "scripts": {
-    "babel": "babel index.js --out-dir dist",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": ["admin ui","react"],
-  "author": "itminus@hotmail.com",
-  "license": "ISC",
-  "peerDependencies": {
-    "antd": "^2.13.4",
-    "react": "^16.0.0",
-    "react-dom": "^16.0.0"
-  },
-  "devDependencies": {
-    "babel": "^6.23.0",
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.0",
-    "babel-plugin-import": "^1.6.0",
-    "babel-preset-env": "^1.6.0",
-    "babel-preset-react": "^6.24.1"
+    "name": "tiny-admin",
+    "version": "0.1.0",
+    "description": "a tiny Admin UI library written in React.JS",
+    "main": "dist/index.js",
+    "scripts": {
+      "babel": "babel index.js --out-dir dist",
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": ["admin ui","react"],
+    "author": "itminus@hotmail.com",
+    "license": "ISC",
+    "peerDependencies": {
+      "antd": "^2.13.4",
+      "react": "^16.0.0",
+      "react-dom": "^16.0.0"
+    },
+    "devDependencies": {
+      "babel-cli": "^6.26.0",
+      "babel-core": "^6.26.0",
+      "babel-plugin-import": "^1.6.0",
+      "babel-preset-env": "^1.6.0",
+      "babel-preset-react": "^6.24.1"
+    }
   }
-}
