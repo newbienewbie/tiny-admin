@@ -118,6 +118,7 @@ export function datagrid(model,AddOrEditFormModal){
                 loading:true,              // 表格是否正在加载，用于控制动画
                 currentRecord:{},          // 执行操作时的当前行记录
                 editModalVisible:false,    // 编辑表单是否可见
+                selectedRowKeys:[],        // 当前选中的行
             };
             // 对 编辑表单组件 的引用
             this.editForm=null;
@@ -159,10 +160,10 @@ export function datagrid(model,AddOrEditFormModal){
 
                     return this.promiseSetState({ 
                         loading: false, 
-                        data: rows.map(r=>{
+                        data:rows? rows.map(r=>{
                             r.key=r.id;
                             return r;
-                        }), 
+                        }) :[], 
                         pagination, 
                     });
                 });
@@ -233,7 +234,23 @@ export function datagrid(model,AddOrEditFormModal){
             const fields=model.fields;
             const headItem=this.props.headItem;
             return (<div>
-            <Table onRowClick={this.props.onRowClick}  dataSource={this.state.data} pagination={this.state.pagination} loading={this.state.loading} onChange={this.onTableChange} >
+            <Table rowSelection={{
+                    type:'radio',
+                    selectedRowKeys:this.state.selectedRowKeys,
+                    onChange:(selectedRowKeys,selectedRows)=>this.setState({selectedRowKeys})
+                }} 
+                onRowClick={(record,index,event)=>{
+                    this.promiseSetState({selectedRowKeys:[record.key]})
+                        .then(_=>{
+                            this.props.onRowClick && this.props.onRowClick(record,index,event);
+                        });
+                    return false;
+                }}  
+                dataSource={this.state.data} 
+                pagination={this.state.pagination} 
+                loading={this.state.loading} 
+                onChange={this.onTableChange} 
+            >
                 { Object.keys(fields).map(k=>{
                     const field=fields[k];
                     return <Column title={field.title} key={k} dataIndex={k} />;
