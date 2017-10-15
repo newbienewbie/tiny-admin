@@ -294,7 +294,7 @@ export function maindetail(MainDatagrid,DetailDatagrid){
                     <MainDatagrid onRowClick={ this.onMainDatagridRowClick } />
                 </Row>
                 <Row>
-                    <DetailDatagrid headItem={this.state.headRecord}/>
+                    <DetailDatagrid headItem={this.state.headItem}/>
                 </Row>
             </div>);
         }
