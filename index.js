@@ -69,10 +69,10 @@ export function addform(model,AddOrEditForm){
             this.onOk=this.onOk.bind(this);
         }
 
-        onOk(){
+        onOk(context={}){
             return this.formRef.validateFields((err,value)=>{
                 if(!err){
-                    model.methods.create(value)
+                    model.methods.create(value,context)
                         .then(resp=>{
                             message.success(`创建成功`);
                             this.formRef.resetFields();
@@ -85,7 +85,7 @@ export function addform(model,AddOrEditForm){
         }
     
         render() {
-            return <AddOrEditForm ref={form=>this.formRef=form} onOk={this.onOk} /> ;
+            return <AddOrEditForm ref={form=>this.formRef=form} onOk={_=>{this.onOk(this.props.formContext);}} /> ;
         }
     }
 
@@ -138,10 +138,10 @@ export function datagrid(model,AddOrEditFormModal){
         /**
          * 当表单发生分页变化、过滤器变化、或者排序器变化时，应该从服务器重新加载数据
          * @param {*} pagination 
-         * @param {*} filters 
+         * @param {*} condition 条件 
          * @param {*} sorter 
          */
-        onTableChange(pagination, filters={}, sorter={}) {
+        onTableChange(pagination, condition={}, sorter={},context={}) {
 
             // const pager = Object.assign({},this.state.pagination);
             // pager.current = pagination.current;
@@ -149,7 +149,7 @@ export function datagrid(model,AddOrEditFormModal){
 
             const {pageSize,current}=pagination;
             
-            return model.methods.list(current,pageSize /* ,condition */)
+            return model.methods.list(current,pageSize ,condition , context)
                 .then(result=>{
                     const {count,rows}=result;
 
@@ -157,41 +157,45 @@ export function datagrid(model,AddOrEditFormModal){
                     pagination.total = count;
                     pagination.current=current;
 
-                    this.setState({ loading: false, data: rows, pagination, });
+                    return this.promiseSetState({ loading: false, data: rows, pagination, });
                 });
         }
 
-        onRemove(record){
-            return model.methods.remove(record.id)
+        onRemove(id,context={}){
+            return model.methods.remove(id,context)
                 .then(resp=>{
                     console.log(resp);
                     message.warning('删除成功');
                 })
                 // 刷新数据源
                 .then(_=>{
-                    return this.onTableChange(this.state.pagination);
+                    return this.onTableChange(this.state.pagination,{},{},context);
                 });
         }
 
-        onEditFormSubmit(){
+        /**
+         * 高阶函数，动态生成一个函数，用于处理表单提交
+         * @param {*} context 
+         */
+        onEditFormSubmit(context){
             return this.editForm.validateFields((err,values)=>{
                 if(!err){
                     const {id}=this.state.currentRecord;
-                    model.methods.update(id,values)
+                    model.methods.update(id,values,context)
                         .then(resp=>{
                             message.success(`修改成功`);
-                            this.setState({editModalVisible:false},()=>{
-                                // 刷新数据源
-                                this.onTableChange(this.state.pagination);
-                            });
+                            return this.promiseSetState({editModalVisible:false})
                         })
+                        .then(()=>{
+                            // 刷新数据源
+                            return this.onTableChange(this.state.pagination,{},{},context);
+                        });
                 }
             });
-            
         }
 
         onEditFormCancel(){
-            this.setState({editModalVisible:false});
+            return this.promiseSetState({editModalVisible:false});
         }
 
         /**
@@ -205,19 +209,22 @@ export function datagrid(model,AddOrEditFormModal){
                 let headItem=nextProps.headItem;
                 return this.promiseSetState({loading:true})
                     .then(_=>{
-                        return this.onTableChange(this.state.pagination);
+                        return this.onTableChange(this.state.pagination,{},{},{headItem});
                     });
             }
         }
 
         componentDidMount(){
+            const headItem=this.props.headItem;
             this.setState({loading:true},()=>{
-                return this.onTableChange(this.state.pagination);
+                return this.onTableChange(this.state.pagination,{},{},{headItem});
             });
         }
+
         render() {
             const {Column,ColumnGroup}=Table;
             const fields=model.fields;
+            const headItem=this.props.headItem;
             return (<div>
             <Table onRowClick={this.props.onRowClick}  dataSource={this.state.data} pagination={this.state.pagination} loading={this.state.loading} onChange={this.onTableChange} >
                 { Object.keys(fields).map(k=>{
@@ -232,7 +239,9 @@ export function datagrid(model,AddOrEditFormModal){
                             return false; 
                         }} >修改</a>
                         <span className='ant-divider' />
-                        <Popconfirm title='确认要删除吗' okText='是' cancelText='否' onConfirm={() => { this.onRemove(record); }} >
+                        <Popconfirm title='确认要删除吗' okText='是' cancelText='否' onConfirm={() => { 
+                            this.onRemove(record.id,{headItem}); 
+                        }} >
                             <a href='#'>删除</a>
                         </Popconfirm>
                         <span className='ant-divider' />
@@ -241,7 +250,10 @@ export function datagrid(model,AddOrEditFormModal){
 
             <AddOrEditFormModal ref={form=>this.editForm=form} visible={this.state.editModalVisible}
                 initialValues={this.state.currentRecord}
-                onOk={this.onEditFormSubmit}
+                onOk={()=>{
+                    this.onEditFormSubmit({headItem});
+                    return false;
+                }}
                 onCancel={this.onEditFormCancel}
             />
 
