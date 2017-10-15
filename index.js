@@ -157,7 +157,14 @@ export function datagrid(model,AddOrEditFormModal){
                     pagination.total = count;
                     pagination.current=current;
 
-                    return this.promiseSetState({ loading: false, data: rows, pagination, });
+                    return this.promiseSetState({ 
+                        loading: false, 
+                        data: rows.map(r=>{
+                            r.key=r.id;
+                            return r;
+                        }), 
+                        pagination, 
+                    });
                 });
         }
 
@@ -262,44 +269,4 @@ export function datagrid(model,AddOrEditFormModal){
     }
 
     return Datagrid;
-}
-
-
-
-/**
- * 工厂函数，生成一个 MainDetailAdmin 组件
- * @param {*} MainDatagrid 
- * @param {*} DetailDatagrid 
- */
-export function maindetail(MainDatagrid,DetailDatagrid){
-
-
-    class MainDetailAdmin extends React.Component{
-        constructor(props){
-            super(props);
-            this.state={
-                headItem:{},
-            };
-
-            this.onMainDatagridRowClick=this.onMainDatagridRowClick.bind(this);
-        }
-
-        onMainDatagridRowClick(record){
-            this.setState({headItem:record});
-        }
-
-        render(){
-            return (<div>
-                <Row>
-                    <MainDatagrid onRowClick={ this.onMainDatagridRowClick } />
-                </Row>
-                <Row>
-                    <DetailDatagrid headItem={this.state.headItem}/>
-                </Row>
-            </div>);
-        }
-    }
-
-    return MainDetailAdmin;
-
 }
