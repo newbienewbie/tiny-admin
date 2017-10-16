@@ -128,6 +128,12 @@ export function datagrid(model,AddOrEditFormModal){
             this.onRemove=this.onRemove.bind(this);
             this.onEditFormSubmit=this.onEditFormSubmit.bind(this);
             this.onEditFormCancel=this.onEditFormCancel.bind(this);
+            // a hook exposed to parent component
+            this.refresh=this.refresh.bind(this);
+        }
+
+        refresh(context){
+            return this.onTableChange(this.state.pagination,{},{},context);
         }
 
         promiseSetState(state){
