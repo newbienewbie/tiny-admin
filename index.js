@@ -218,6 +218,10 @@ export function datagrid(model,AddOrEditFormModal){
                 return this.promiseSetState({loading:true})
                     .then(_=>{
                         return this.onTableChange(this.state.pagination,{},{},{headItem});
+                    })
+                    .then(_=>{
+                        // 重置 selectedRowKeys
+                        return this.promiseSetState({selectedRowKeys:[]});
                     });
             }
         }
