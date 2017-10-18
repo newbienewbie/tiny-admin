@@ -54,27 +54,46 @@ export const datagrid={
 
 相应的`model`定义为：
 ```js
-const model={
-    name:"role",
+export const model={
+    name:"post",
     fields:{
-        "name":{
-            title:'角色名',
+        title:{
+            title:'资源名',
         },
-        "description":{
-            title:"角色米哦啊书",
+        excerpt:{
+            title:"摘要",
+        },
+        category:{
+            title:"分类",
+        },
+        featureImageUrl:{
+            title:"配图",    // 默认情况下，title是显示到`Datagrid`中的内容
+            render:(text, record, index)=>text  // 如果定义了render函数，则用此函数渲染
+            display:false,  // 但是一旦定义了display:false，则不会再在`Datagrid`中显示
+        },
+        content:{
+            title:"内容",
+            display:false, 
+        },
+    },
+    actions:{
+        remove:{            
+            display:true,    // 是否要显示删除按钮
+        },
+        edit:{           
+            display:true,    // 是否要显示编辑按钮
         },
     },
     methods:{
-        create:function(record){
-            const {name,description}=record;
-            return createRole(name,description);
-        },
-        remove:removeRole,
-        update:function(id,record){
-            const{name,description}=record;
-            return updateRole(id,name,description);
-        },
-        list:listRoles,
+        create:postapi.create,
+        remove:postapi.remove,
+        update:postapi.update,
+        list:postapi.list,
+        detail:postapi.detail,
+        publish:postapi.publish,
+        approval:postapi.approval,
+        sendback:postapi.sendback,
+        reject:postapi.reject,
     }
 };
 ```

@@ -1,7 +1,26 @@
 import React from 'react'; 
 import {Row,Col,Table,Modal,Popconfirm,message,Form,Button} from 'antd';
 
+function isFunction(functionToCheck) {
+    var getType = {};
+    return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+}
 
+/**
+ * 判断字段是否显示。
+ * 如果某个字段明确定义设置为`false`或者其`display`属性设置为`false`，则不予显示
+ * @param {*} obj 
+ * @param {String} prop  属性名
+ */
+function displayable(obj,prop){
+    // 默认情况下，某个字段是显示的
+    let display=true;
+    // 如果明确定义了该属性为false或者该属性的display:false，则不予显示
+    if(obj.hasOwnProperty(prop) && (obj[prop]==false || obj[prop].display==false)){
+        display=false;
+    }
+    return display;
+}
 
 
 /**
@@ -74,11 +93,15 @@ export function addform(model,AddOrEditForm){
                 if(!err){
                     model.methods.create(value,context)
                         .then(resp=>{
-                            message.success(`创建成功`);
-                            this.formRef.resetFields();
+                            if(resp.status=='SUCCESS'){
+                                message.success(`创建成功`);
+                                this.formRef.resetFields();
+                            }else{
+                                message.error(`创建失败${resp.msg}`);
+                            }
                         })
                         .catch(e=>{
-                            message.error(`失败`+e);
+                            message.error(`失败`);
                         });
                 }
             });
@@ -92,6 +115,49 @@ export function addform(model,AddOrEditForm){
     return AddForm;
 }
 
+/**
+ * 工厂函数，生成一个 EditForm 组件
+ * @param {*} model 
+ * @param {*} AddOrEditForm 
+ */
+export function editform(model,AddOrEditForm){
+
+    class EditForm extends React.Component{
+        constructor(props){
+            super(props);
+            this.formRef=null;
+            // bind `this`
+            this.onOk=this.onOk.bind(this);
+        }
+
+        onOk(context={}){
+            return this.formRef.validateFields((err,value)=>{
+                if(!err){
+                    const id=this.props.id;
+                    model.methods.update(id,value,context)
+                        .then(resp=>{
+                            if(resp.status=="SUCCESS"){
+                                message.success(`修改成功`);
+                                this.formRef.resetFields();
+                            }else{
+                                message.error(`修改失败${resp.msg}`);
+                                console.log(resp);
+                            }
+                        })
+                        .catch(e=>{
+                            message.error(`失败`+e);
+                        });
+                }
+            });
+        }
+    
+        render() {
+            return <AddOrEditForm initialValues={this.props.initialValues} ref={form=>this.formRef=form} onOk={_=>{this.onOk(this.props.formContext);}} /> ;
+        }
+    }
+
+    return EditForm;
+}
 
 
 
@@ -130,6 +196,8 @@ export function datagrid(model,AddOrEditFormModal){
             this.onEditFormCancel=this.onEditFormCancel.bind(this);
             // a hook exposed to parent component
             this.refresh=this.refresh.bind(this);
+            this._renderFieldsColumn=this._renderFieldsColumn.bind(this);
+            this._renderActionsColumn=this._renderActionsColumn.bind(this);
         }
 
         refresh(context){
@@ -239,61 +307,95 @@ export function datagrid(model,AddOrEditFormModal){
             });
         }
 
+
+        _renderFieldsColumn(){
+            const fields=model.fields;
+            return Object.keys(fields)
+                .filter(k=> displayable(fields,k) )
+                .map(k=>{
+                    const field=fields[k];
+                    if(isFunction(field.render)){
+                        return <Table.Column title={field.title} key={k} dataIndex={k} render={field.render} />;
+                    }else{
+                        return <Table.Column title={field.title} key={k} dataIndex={k} />;
+                    }
+                }); 
+        }
+
+        _renderActionsColumn(){
+            let actions=model.actions;
+            return (
+            <Table.Column title='操作' key='action' render={(text, record) => (
+                <span>
+                    {displayable(actions,'edit') ?
+                        (<span>
+                            <a onClick={()=>{
+                                this.editForm.setFieldsValue(record);
+                                this.setState({editModalVisible:true,currentRecord:record});
+                                return false; 
+                            }} >修改</a>
+                            <span className='ant-divider' />
+                        </span>):
+                        ""
+                    }
+                    {displayable(actions,'delete') ?
+                        (<span>
+                            <Popconfirm title='确认要删除吗' okText='是' cancelText='否' onConfirm={() => { 
+                                this.onRemove(record.id,{headItem}); 
+                            }} >
+                                <a href='#'>删除</a>
+                            </Popconfirm>
+                            <span className='ant-divider' />
+                        </span>) :
+                        ""
+                    }
+                </span>)} 
+            />);
+        }
+
         render() {
             const {Column,ColumnGroup}=Table;
             const fields=model.fields;
             const headItem=this.props.headItem;
             return (<div>
-            <Table rowSelection={{
-                    type:'radio',
-                    selectedRowKeys:this.state.selectedRowKeys,
-                    onChange:(selectedRowKeys,selectedRows)=>this.setState({selectedRowKeys})
-                }} 
-                onRowClick={(record,index,event)=>{
-                    this.promiseSetState({selectedRowKeys:[record.key]})
-                        .then(_=>{
-                            this.props.onRowClick && this.props.onRowClick(record,index,event);
-                        });
-                    return false;
-                }}  
-                dataSource={this.state.data} 
-                pagination={this.state.pagination} 
-                loading={this.state.loading} 
-                onChange={this.onTableChange} 
-            >
-                { Object.keys(fields).map(k=>{
-                    const field=fields[k];
-                    return <Column title={field.title} key={k} dataIndex={k} />;
-                }) }
-                <Column title='操作' key='action' render={(text, record) => (
-                    <span>
-                        <a onClick={()=>{
-                            this.editForm.setFieldsValue(record);
-                            this.setState({editModalVisible:true,currentRecord:record});
-                            return false; 
-                        }} >修改</a>
-                        <span className='ant-divider' />
-                        <Popconfirm title='确认要删除吗' okText='是' cancelText='否' onConfirm={() => { 
-                            this.onRemove(record.id,{headItem}); 
-                        }} >
-                            <a href='#'>删除</a>
-                        </Popconfirm>
-                        <span className='ant-divider' />
-                    </span>)} />
-            </Table>
+                <Table rowSelection={{
+                        type:'radio',
+                        selectedRowKeys:this.state.selectedRowKeys,
+                        onChange:(selectedRowKeys,selectedRows)=>this.setState({selectedRowKeys})
+                    }} 
+                    onRowClick={(record,index,event)=>{
+                        this.promiseSetState({selectedRowKeys:[record.key]})
+                            .then(_=>{
+                                this.props.onRowClick && this.props.onRowClick(record,index,event);
+                            });
+                        return false;
+                    }}  
+                    dataSource={this.state.data} 
+                    pagination={this.state.pagination} 
+                    loading={this.state.loading} 
+                    onChange={this.onTableChange} 
+                >
+                    {this._renderFieldsColumn()}
+                    {this._renderActionsColumn()}
+                </Table>
 
-            <AddOrEditFormModal ref={form=>this.editForm=form} visible={this.state.editModalVisible}
-                initialValues={this.state.currentRecord}
-                onOk={()=>{
-                    this.onEditFormSubmit({headItem});
-                    return false;
-                }}
-                onCancel={this.onEditFormCancel}
-            />
+                <AddOrEditFormModal ref={form=>this.editForm=form} visible={this.state.editModalVisible}
+                    initialValues={this.state.currentRecord}
+                    onOk={()=>{
+                        this.onEditFormSubmit({headItem});
+                        return false;
+                    }}
+                    onCancel={this.onEditFormCancel}
+                />
 
-        </div>);
+            </div>);
         }
     }
+
+    Datagrid.defaultProps={
+        displayDeleteAction:true,
+        displayEditAction:true,
+    };
 
     return Datagrid;
 }
