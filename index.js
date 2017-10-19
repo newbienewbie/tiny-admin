@@ -15,6 +15,10 @@ function isFunction(functionToCheck) {
 function displayable(obj,prop){
     // 默认情况下，某个字段是显示的
     let display=true;
+
+    // 如果未定义obj，直接返回
+    if(!obj){ return display; }
+
     // 如果明确定义了该属性为false或者该属性的display:false，则不予显示
     if(obj.hasOwnProperty(prop) && (obj[prop]==false || obj[prop].display==false)){
         display=false;
