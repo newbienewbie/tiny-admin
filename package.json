@@ -1,9 +1,10 @@
 {
     "name": "tiny-admin",
-    "version": "0.2.9",
+    "version": "0.2.10",
     "description": "a tiny Admin UI library written in React.JS",
     "main": "dist/index.js",
     "scripts": {
+      "prepublish": "npm run build",
       "build": "babel index.js --out-dir dist",
       "test": "echo \"Error: no test specified\" && exit 1"
     },
