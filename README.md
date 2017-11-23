@@ -140,17 +140,31 @@ class PlainAddOrEditForm extends React.Component{
     }
 }
 ```
+这个普通的视图组件`PlainAddOrEditForm`，并没有定义提交、重置按钮，也没有定义任何行为逻辑，更没有定义是普通的表单组件还是嵌套在对话框中实现。它只是定义了一系列用于接收输入的视图控件，仅此而已。这么做的理由是可以在上述的这些情况中复用代码。
+
 嫌代码太长？试试`antd-snippets` [antd-snippets](https://marketplace.visualstudio.com/items?itemName=bang.antd-snippets) ([github](https://github.com/bang88/antd-snippets))。
 我在`bang88`的仓库代码里添加了一个`antformwrapped`。可以快速生成上述代码。
 
-要生成一个用于创建角色的表单，只要编写代码：
+要生成一个用于创建记录的表单组件，只要编写代码：
 ```js
-const AddOrEditForm=defaultDecoratedForm.createDecoratedAddOrEditForm(PlainAddOrEditForm);
-const AddForm=addform.create(model,AddOrEditForm);
-```
+// ... 首先定义一个普通的视图组件 PlainAddOrEditForm
 
-要生成一个用于管理角色的`Datagrid`，只要使用以下代码：
-```js
-const AddOrEditFormModal=defaultDecoratedForm.createDecoratedAddOrEditFormModal(PlainAddOrEditForm);
-const DG=datagrid.create(model,AddOrEditFormModal);
+// 然后再创建一个经过 AntDesign 的 Form.create()() 装饰的表单
+const AddOrEditForm=decorateAddOrEditForm(PlainAddOrEditForm);
+// 生成用于增加记录的表单组件，并绑定模型的
+//  `#create(value,context)`
+// 方法
+const AddForm=addform(model,AddOrEditForm);
+
+
+// 创建一个经过AntDesign的Form.create()()装饰的表单对话框
+const AddOrEditFormModal=decorateAddOrEditFormModal(PlainAddOrEditForm);
+// 生成用于管理记录的Datagrid组件，并绑定模型的
+//  `#list(current,pageSize,condition,context)`
+//  `#update(id,values,context)`
+//  `#remove(id,context)`
+// 方法，每次点击相应记录的action，都会执行相应操作：
+//  delete: 弹出删除的确认对话框，确认是否要删除
+//  edit:   弹出编辑的模态对话框，并绑定相应回调函数
+const Datagrid=datagrid(model,AddOrEditFormModal);
 ```
