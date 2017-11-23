@@ -1,6 +1,6 @@
 {
     "name": "tiny-admin",
-    "version": "0.2.7",
+    "version": "0.2.9",
     "description": "a tiny Admin UI library written in React.JS",
     "main": "dist/index.js",
     "scripts": {

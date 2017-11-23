@@ -76,7 +76,7 @@ export function decorateAddOrEditModal(PlainAddOrEditForm){
             super(props);
         }
         render(){
-            return <Modal title={this.porps.title || "编辑"} okText="提交" cancelText="取消"
+            return <Modal title={this.props.title || "编辑"} okText="提交" cancelText="取消"
                 visible={this.props.visible} data={this.props.data}
                 onOk={this.props.onOk} onCancel={this.props.onCancel}
             >
