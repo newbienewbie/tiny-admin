@@ -35,45 +35,58 @@ export const defaultDecoratedForm={
     /**
      * 工厂函数，用于创建装饰过的 AddOrEditForm 表单
      */
-    createDecoratedAddOrEditForm:function(PlainAddOrEditForm){
-
-        class PlainAddOrEditFormWithSubmitButton extends React.Component{
-            constructor(props){
-                super(props);
-            }
-            render(){
-                return <div>
-                    <PlainAddOrEditForm form={this.props.form} initialValues={this.props.initialValues}/>
-                    <Button htmlType="submit" type="primary" onClick={this.props.onOk}> 提交 </Button>
-                </div>;
-            }
-        }
-
-        return Form.create()(PlainAddOrEditFormWithSubmitButton);
-    },
+    createDecoratedAddOrEditForm:decorateAddOrEditForm,
 
     /**
      * 工厂函数，用于创建装饰过的 AddOrEditFormModal 表单
      */
-    createDecoratedAddOrEditFormModal:function(PlainAddOrEditForm){
-
-        class PlainAddOrEditFormWithModal extends React.Component{
-            constructor(props){
-                super(props);
-            }
-            render(){
-                return <Modal title="Title" okText="提交" cancelText="取消"
-                    visible={this.props.visible} data={this.props.data}
-                    onOk={this.props.onOk} onCancel={this.props.onCancel}
-                >
-                    <PlainAddOrEditForm form={this.props.form} initialValues={this.props.initialValues} />
-                </Modal>
-                ;
-            }
-        }
-        return Form.create()(PlainAddOrEditFormWithModal);
-    }
+    createDecoratedAddOrEditFormModal:decorateAddOrEditModal
 };
+
+
+
+
+/**
+ * 工厂函数，用于创建装饰过的 AddOrEditForm 表单
+ */
+export function decorateAddOrEditForm(PlainAddOrEditForm){
+
+    class PlainAddOrEditFormWithSubmitButton extends React.Component{
+        constructor(props){
+            super(props);
+        }
+        render(){
+            return <div>
+                <PlainAddOrEditForm form={this.props.form} initialValues={this.props.initialValues}/>
+                <Button htmlType="submit" type="primary" onClick={this.props.onOk}> 提交 </Button>
+            </div>;
+        }
+    }
+
+    return Form.create()(PlainAddOrEditFormWithSubmitButton);
+}
+
+/**
+ * 工厂函数，用于创建装饰过的 AddOrEditFormModal 表单
+ */
+export function decorateAddOrEditModal(PlainAddOrEditForm){
+
+    class PlainAddOrEditFormWithModal extends React.Component{
+        constructor(props){
+            super(props);
+        }
+        render(){
+            return <Modal title={this.porps.title || "编辑"} okText="提交" cancelText="取消"
+                visible={this.props.visible} data={this.props.data}
+                onOk={this.props.onOk} onCancel={this.props.onCancel}
+            >
+                <PlainAddOrEditForm form={this.props.form} initialValues={this.props.initialValues}  />
+            </Modal>
+            ;
+        }
+    }
+    return Form.create()(PlainAddOrEditFormWithModal);
+}
 
 
 
