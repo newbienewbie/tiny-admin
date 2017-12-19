@@ -6,44 +6,30 @@ a tiny Admin UI library written in React.JS
 
 ```js
 /**
- * 默认提供的 DecoratedFormComponent 对象，提供工厂函数，用于创建普通AddOrEdit表单、和带Modal表单
+ * 工厂函数，用于创建装饰过的 AddOrEditForm 表单
  */
-export const defaultDecoratedForm={
+export function decorateAddOrEditForm(PlainAddOrEditForm);
 
-    /**
-     * 工厂函数，用于创建装饰过的 AddOrEditForm 表单
-     */
-    createDecoratedAddOrEditForm:function(PlainAddOrEditForm){ },
-
-    /**
-     * 工厂函数，用于创建装饰过的 AddOrEditFormModal 表单
-     */
-    createDecoratedAddOrEditFormModal:function(PlainAddOrEditForm){ }
-};
+/**
+ * 工厂函数，用于创建装饰过的 AddOrEditFormModal 表单
+ */
+export function decorateAddOrEditModal(PlainAddOrEditForm);
 
 
 /**
- * AddForm
+ * 工厂函数，生成一个 AddForm  组件
+ * @param {*} model 
+ * @param {*} AddOrEditForm 
  */
-export const addform={
-
-    /**
-     * 工厂函数，生成一个 AddForm 组件
-     */
-    create:function(model,AddOrEditForm){ },
-};
+export function addform(model,AddOrEditForm);
 
 
 /**
- * Datagrid
+ * 工厂函数，生成一个 Datagrid 组件
+ * @param {*} model 
+ * @param {*} AddOrEditFormModal 
  */
-export const datagrid={
-
-    /**
-     * 工厂函数，生成一个 Datagrid 组件
-     */
-    create:function(model,AddOrEditFormModal){ },
-};
+export function datagrid(model,AddOrEditFormModal){
 ```
 
 ## 示例
@@ -168,3 +154,8 @@ const AddOrEditFormModal=decorateAddOrEditFormModal(PlainAddOrEditForm);
 //  edit:   弹出编辑的模态对话框，并绑定相应回调函数
 const Datagrid=datagrid(model,AddOrEditFormModal);
 ```
+
+对于生成的`Datagrid`，其实例有以下几个核心属性和方法：
+1. 具有`#onRowClick(record)`方法，可以与其他组件联动，典型的是和另外一个`Datagrid`联动。
+2. 具有`headItem`属性，每当该属性的`id`变化时，会触发调用`onTableChange(this.state.pagination,{},{},{headItem});`。可以用于行项目的自动刷新。
+3. 具有`#refresh()`方法，可以通过`ref()`钩子设置到父组件中，然后在恰当时候强制刷新数据

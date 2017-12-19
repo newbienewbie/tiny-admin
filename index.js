@@ -341,6 +341,7 @@ export function datagrid(model,AddOrEditFormModal){
 
         _renderActionsColumn(){
             let actions=model.actions;
+            const headItem=this.props.headItem; 
             return (
             <Table.Column title='操作' key='action' render={(text, record) => (
                 <span>
